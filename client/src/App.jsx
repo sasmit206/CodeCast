@@ -3,7 +3,7 @@ import Header from './components/Header.jsx';
 import UrlForm from './components/UrlForm.jsx';
 import ChapterSidebar, { ExercisePanel } from './components/ChapterLayout.jsx';
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 console.log("CodeCast API Base URL:", API_BASE || "Relative (empty fallback)");
 
 export default function App() {

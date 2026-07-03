@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Editor from '@monaco-editor/react';
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 
 export default function CodingExercise({ exercise, number, currentCode, onCodeChange, onCodeExecute }) {
   const code = currentCode !== undefined ? currentCode : (exercise.starterCode || '');
