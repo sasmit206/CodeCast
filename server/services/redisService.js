@@ -1,6 +1,9 @@
 import { createClient } from 'redis';
 
-const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+let REDIS_URL = (process.env.REDIS_URL || '').trim();
+if (!REDIS_URL || REDIS_URL === 'undefined' || REDIS_URL === 'null') {
+  REDIS_URL = 'redis://localhost:6379';
+}
 let client = null;
 let isRedisAvailable = false;
 
