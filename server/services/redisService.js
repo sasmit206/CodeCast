@@ -19,6 +19,11 @@ let isRedisAvailable = false;
 const memoryCache = new Map();
 const memoryCacheExpirations = new Map();
 
+let isConnecting = false;
+
+/**
+ * Initialize and connect the Redis client.
+ */
 async function initRedis() {
   console.log(`[Redis Connection] Attempting to connect to ${REDIS_URL}...`);
   client = createClient({
@@ -26,19 +31,17 @@ async function initRedis() {
     socket: {
       connectTimeout: 5000,
       reconnectStrategy: (retries) => {
-        
-        if (retries > 5) {
-          console.log('[Redis Connection] Max retries reached. Caching falling back to Local Memory.');
+        // Under serverless environments, do not reconnect/retry to avoid hanging function context
+        if (process.env.VERCEL || retries > 3) {
           isRedisAvailable = false;
-          return new Error('Max retries reached');
+          return new Error('Max connection retries exceeded');
         }
-        return Math.min(retries * 500, 2000); 
+        return Math.min(retries * 500, 2000);
       }
     }
   });
 
   client.on('error', (err) => {
-    
     console.warn(`[Redis Client Warning] ${err.message}`);
     isRedisAvailable = false;
   });
@@ -65,9 +68,33 @@ async function initRedis() {
   }
 }
 
-initRedis();
+/**
+ * Ensures the client is connected before running commands.
+ * Runs lazily on the first request to prevent blocking the startup thread.
+ */
+async function ensureConnected() {
+  if (!client && !isConnecting) {
+    isConnecting = true;
+    try {
+      await initRedis();
+    } catch (err) {
+      console.warn(`[Redis Lazy Init Error] ${err.message}`);
+    } finally {
+      isConnecting = false;
+    }
+  }
+}
 
+/**
+ * GET key from cache.
+ * Falls back to local memory cache if Redis is down.
+ *
+ * @param {string} key - Cache lookup key.
+ * @returns {Promise<any|null>} Parsed JSON value, or null if key does not exist or expired.
+ */
 export async function getCached(key) {
+  await ensureConnected();
+
   if (isRedisAvailable && client) {
     try {
       const data = await client.get(key);
@@ -80,6 +107,7 @@ export async function getCached(key) {
     }
   }
 
+  // Local Memory Cache Fallback
   const expiration = memoryCacheExpirations.get(key);
   if (expiration && Date.now() > expiration) {
     
@@ -92,7 +120,16 @@ export async function getCached(key) {
   return memoryValue ? JSON.parse(memoryValue) : null;
 }
 
+/**
+ * SET key in cache with TTL.
+ * Falls back to local memory cache if Redis is down.
+ *
+ * @param {string} key - Cache storage key.
+ * @param {any} value - Object or value to cache.
+ * @param {number} ttlSeconds - Expiration time in seconds.
+ */
 export async function setCached(key, value, ttlSeconds = 86400) {
+  await ensureConnected();
   const serialized = JSON.stringify(value);
 
   if (isRedisAvailable && client) {
@@ -106,11 +143,17 @@ export async function setCached(key, value, ttlSeconds = 86400) {
     }
   }
 
+  // Local Memory Cache Fallback
   memoryCache.set(key, serialized);
   memoryCacheExpirations.set(key, Date.now() + (ttlSeconds * 1000));
 }
 
+/**
+ * DELETE key from cache.
+ */
 export async function deleteCached(key) {
+  await ensureConnected();
+
   if (isRedisAvailable && client) {
     try {
       await client.del(key);
