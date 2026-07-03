@@ -4,6 +4,7 @@ import UrlForm from './components/UrlForm.jsx';
 import ChapterSidebar, { ExercisePanel } from './components/ChapterLayout.jsx';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
+console.log("CodeCast API Base URL:", API_BASE || "Relative (empty fallback)");
 
 export default function App() {
   const [loading, setLoading]   = useState(false);

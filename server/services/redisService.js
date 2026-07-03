@@ -1,6 +1,15 @@
 import { createClient } from 'redis';
 
 let REDIS_URL = (process.env.REDIS_URL || '').trim();
+const useTls = REDIS_URL.includes('--tls');
+const redisMatch = REDIS_URL.match(/(rediss?:\/\/[^\s]+)/);
+if (redisMatch) {
+  REDIS_URL = redisMatch[1];
+  // If the pasted command requested TLS, force rediss:// protocol
+  if (useTls && REDIS_URL.startsWith('redis://')) {
+    REDIS_URL = REDIS_URL.replace('redis://', 'rediss://');
+  }
+}
 if (!REDIS_URL || REDIS_URL === 'undefined' || REDIS_URL === 'null') {
   REDIS_URL = 'redis://localhost:6379';
 }
