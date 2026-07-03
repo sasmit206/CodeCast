@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/chapters",
+      "destination": "https://codecast-backend-0hzq.onrender.com/chapters"
+    },
+    {
+      "source": "/chapters/status/:videoId",
+      "destination": "https://codecast-backend-0hzq.onrender.com/chapters/status/:videoId"
+    },
+    {
+      "source": "/execute",
+      "destination": "https://codecast-backend-0hzq.onrender.com/execute"
+    }
+  ]
+}
