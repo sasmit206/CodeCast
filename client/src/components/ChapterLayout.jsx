@@ -50,7 +50,7 @@ export function ExercisePanel({ chapter, userAnswers, onMcqSelect, onCodeChange,
 
       {chapter.exercises.map((exercise, i) => {
         const key = `${chapter.id}-${exercise.id}`;
-        const answerState = userAnswers[key] || ;
+        const answerState = userAnswers[key] || {};
 
         return exercise.type === 'multiple_choice' ? (
           <MultipleChoice
