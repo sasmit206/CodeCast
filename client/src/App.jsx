@@ -21,6 +21,8 @@ export default function App() {
   const [userAnswers, setUserAnswers] = useState({});
   const [showResults, setShowResults] = useState(false);
   const [progress, setProgress] = useState({ step: '', current: 0, total: 0 });
+  const [videoId, setVideoId] = useState(null);
+  const [playerRef, setPlayerRef] = useState(null);
 
   async function pollStatus(videoId) {
     const interval = setInterval(async () => {
@@ -65,6 +67,10 @@ export default function App() {
     setProgress({ step: 'fetching_transcript', current: 0, total: 0 });
 
     try {
+      const vid = extractVideoId(url);
+      if (!vid) throw new Error('Invalid YouTube URL');
+      setVideoId(vid);
+
       const res = await fetch(`${API_BASE}/chapters`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -88,6 +94,18 @@ export default function App() {
       setError(err.message);
       setLoading(false);
     }
+  }
+
+  function extractVideoId(url) {
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/,
+      /youtube\.com\/embed\/([^&\n?#]+)/,
+    ];
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) return match[1];
+    }
+    return null;
   }
 
   const handleMcqSelect = (chapterId, exerciseId, option) => {
@@ -191,6 +209,9 @@ export default function App() {
             <ExercisePanel
               key={activeId}
               chapter={activeChapter}
+              videoId={videoId}
+              playerRef={playerRef}
+              onPlayerReady={(player) => setPlayerRef(player)}
               userAnswers={userAnswers}
               onMcqSelect={handleMcqSelect}
               onCodeChange={handleCodeChange}

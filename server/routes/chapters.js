@@ -1,7 +1,8 @@
 import { Router } from 'express';
+import fetch from 'node-fetch';
 import { getSegments, extractVideoId } from '../services/transcriptService.js';
 import { splitIntoChapters } from '../services/chapterService.js';
-import { generateChapterContent } from '../services/aiService.js';
+import { generateChapterContent, generateSyntheticChapters } from '../services/aiService.js';
 import { getCached, setCached } from '../services/redisService.js';
 
 const router = Router();
@@ -93,10 +94,59 @@ router.post('/', async (req, res) => {
 
     (async () => {
       try {
-        
-        const segments = await getSegments(url);
-        activeJobs[videoId].status = 'splitting_chapters';
+        let segments;
+        try {
+          segments = await getSegments(url);
+        } catch (transcriptErr) {
+          console.warn(`[Background Job] Video ${videoId} transcript failed: ${transcriptErr.message}. Running synthetic curriculum generation...`);
+          
+          let videoTitle = 'Programming Video';
+          try {
+            const noembedRes = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoId}`);
+            if (noembedRes.ok) {
+              const noembedData = await noembedRes.json();
+              videoTitle = noembedData.title || videoTitle;
+            }
+          } catch (noembedErr) {
+            console.warn(`[noembed fetch failed] ${noembedErr.message}`);
+          }
 
+          activeJobs[videoId].status = 'generating_exercises';
+          const syntheticData = await generateSyntheticChapters(videoTitle);
+          const rawChapters = syntheticData.chapters || [];
+
+          activeJobs[videoId].total = rawChapters.length;
+          const chapters = rawChapters.map((ch, idx) => {
+            const timeRange = ch.timeRange || '0:00 - 5:00';
+            const timeParts = timeRange.split('-');
+            const startLabel = timeParts[0] ? timeParts[0].trim() : '0:00';
+            const endLabel = timeParts[1] ? timeParts[1].trim() : '5:00';
+
+            return {
+              id: `${videoId}-${idx}`,
+              title: ch.title,
+              startTime: idx * 300,
+              endTime: (idx + 1) * 300,
+              startLabel,
+              endLabel,
+              exercises: ch.exercises || []
+            };
+          });
+
+          const responsePayload = {
+            url,
+            totalChapters: chapters.length,
+            chapters,
+          };
+
+          await setCached(`codecast:${videoId}`, responsePayload, 86400);
+          activeJobs[videoId].chapters = chapters;
+          activeJobs[videoId].progress = chapters.length;
+          activeJobs[videoId].status = 'complete';
+          return;
+        }
+
+        activeJobs[videoId].status = 'splitting_chapters';
         const rawChapters = splitIntoChapters(segments);
         activeJobs[videoId].total = rawChapters.length;
         activeJobs[videoId].status = 'generating_exercises';

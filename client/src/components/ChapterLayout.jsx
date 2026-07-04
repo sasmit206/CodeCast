@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import MultipleChoice from './MultipleChoice.jsx';
 import CodingExercise from './CodingExercise.jsx';
 
@@ -81,12 +82,59 @@ export default function ChapterSidebar({ chapters, activeId, onSelect, onSubmitA
   );
 }
 
-export function ExercisePanel({ chapter, userAnswers, onMcqSelect, onCodeChange, onCodeExecute }) {
+export function ExercisePanel({
+  chapter,
+  videoId,
+  playerRef,
+  onPlayerReady,
+  userAnswers,
+  onMcqSelect,
+  onCodeChange,
+  onCodeExecute
+}) {
+  const [startTime, setStartTime] = useState(0);
+
   if (!chapter) return null;
+
+  useEffect(() => {
+    if (chapter.startLabel) {
+      const seconds = timeToSeconds(chapter.startLabel);
+      setStartTime(seconds);
+    }
+  }, [chapter.id]);
+
+  function timeToSeconds(timeStr) {
+    if (!timeStr) return 0;
+    const parts = timeStr.split(':').map(Number);
+    if (parts.length === 3) {
+      return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    } else if (parts.length === 2) {
+      return parts[0] * 60 + parts[1];
+    }
+    return parts[0] || 0;
+  }
+
+  const embedUrl = `https://www.youtube.com/embed/${videoId}?enablejsapi=1&start=${startTime}`;
 
   return (
     <main className="exercise-panel">
-      <div>
+      {videoId && (
+        <div className="video-player-container">
+          <iframe
+            key={`${videoId}-${startTime}`}
+            width="100%"
+            height="480"
+            src={embedUrl}
+            title="Chapter video"
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            style={{ borderRadius: '8px' }}
+          />
+        </div>
+      )}
+
+      <div className="chapter-header-section">
         <h2 className="panel-chapter-title">{chapter.title}</h2>
         <p className="panel-chapter-meta">
           {chapter.startLabel} – {chapter.endLabel} · {chapter.exercises.length} exercises

@@ -298,3 +298,62 @@ export async function generateChapterContent(chapterText, timeRange) {
     exercises: parsed.exercises,
   };
 }
+
+export async function generateSyntheticChapters(videoTitle) {
+  const prompt = `
+You are an expert programming educator. We could not extract the transcript for this video: "${videoTitle}".
+Generate a structured learning curriculum with exactly 4 distinct chapters that logically match this video topic.
+
+For each chapter, provide:
+1. A descriptive title.
+2. A timeRange string representing a logical progression, starting from "0:00 - 5:00" and progressing forward.
+3. An array containing exactly 1 coding exercise of type "multiple_choice" or "coding" (coding exercises must include: question, starterCode, answer, explanation).
+
+Format your output as a single JSON object matching this structure:
+{
+  "chapters": [
+    {
+      "title": "Chapter Title",
+      "timeRange": "0:00 - 5:00",
+      "exercises": [
+        {
+          "type": "coding",
+          "title": "Exercise Title",
+          "question": "Exercise instructions and question prompt...",
+          "starterCode": "starter code...",
+          "answer": "correct solution code...",
+          "explanation": "why this is the correct solution..."
+        }
+      ]
+    }
+  ]
+}
+`.trim();
+
+  let rawText;
+  try {
+    const runCall = () => {
+      const groq = getClient();
+      return groq.chat.completions.create({
+        model: 'openai/gpt-oss-120b',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.5,
+        response_format: { type: 'json_object' },
+        max_tokens: 4096,
+      });
+    };
+
+    const completion = await callWithRetry(runCall, 4, 800);
+    rawText = completion.choices[0]?.message?.content;
+    if (!rawText) throw new Error('Groq returned an empty response.');
+  } catch (err) {
+    throw new Error(`Synthetic AI generation failed: ${err.message}`);
+  }
+
+  try {
+    const cleaned = sanitiseResponse(rawText);
+    return JSON.parse(cleaned);
+  } catch {
+    throw new Error(`Unparseable JSON from synthetic AI. Raw: "${rawText.slice(0, 200)}..."`);
+  }
+}

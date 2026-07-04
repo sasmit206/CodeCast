@@ -956,6 +956,25 @@ a:hover {
   overflow-y: auto;
 }
 
+.video-player-container {
+  width: 100%;
+  margin-bottom: var(--sp-xl);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+.video-player-container iframe {
+  display: block;
+}
+
+.chapter-header-section {
+  margin-bottom: var(--sp-xl);
+  padding-bottom: var(--sp-lg);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
 .exercise-card {
   margin-bottom: var(--sp-xl);
   padding: var(--sp-lg);
