@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 export default function UrlForm({ onSubmit, loading }) {
   const [url, setUrl] = useState('');
+  const [focused, setFocused] = useState(false);
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -10,14 +11,17 @@ export default function UrlForm({ onSubmit, loading }) {
 
   return (
     <section className="hero">
-      <p className="hero-eyebrow">AI-Powered Learning</p>
+      <div className="hero-gradient-1" />
+      <div className="hero-gradient-2" />
+
       <h1 className="hero-title">
-        Turn any YouTube tutorial<br />
-        into <span>coding exercises</span>
+        your solution to<br />
+        <span>tutorial hell</span>
       </h1>
+
       <p className="hero-sub">
-        Paste a programming video URL. CodeCast splits it into chapters
-        and generates exercises with an in-browser code editor.
+        Turn tutorials into practice.<br />
+        Paste a YouTube link to generate MCQs and coding challenges.
       </p>
 
       <form className="url-form" onSubmit={handleSubmit} id="url-form">
@@ -28,6 +32,8 @@ export default function UrlForm({ onSubmit, loading }) {
           placeholder="https://youtube.com/watch?v=..."
           value={url}
           onChange={(e) => setUrl(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           disabled={loading}
           required
           aria-label="YouTube video URL"
@@ -44,7 +50,7 @@ export default function UrlForm({ onSubmit, loading }) {
               Generating…
             </>
           ) : (
-            <>Generate Exercise</>
+            <>Generate</>
           )}
         </button>
       </form>

@@ -1,14 +1,21 @@
 import { useState } from 'react';
 import Header from './components/Header.jsx';
+import Hero from './components/Hero.jsx';
+import Problem from './components/Problem.jsx';
+import Features from './components/Features.jsx';
+import HowItWorks from './components/HowItWorks.jsx';
+import Demo from './components/Demo.jsx';
+import Stats from './components/Stats.jsx';
+import FAQ from './components/FAQ.jsx';
+import Footer from './components/Footer.jsx';
 import UrlForm from './components/UrlForm.jsx';
 import ChapterSidebar, { ExercisePanel } from './components/ChapterLayout.jsx';
 
 const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
-console.log("CodeCast API Base URL:", API_BASE || "Relative (empty fallback)");
 
 export default function App() {
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [chapters, setChapters] = useState(null);
   const [activeId, setActiveId] = useState(null);
   const [userAnswers, setUserAnswers] = useState({});
@@ -152,106 +159,97 @@ export default function App() {
   const scores = getScoreDetails();
   const activeChapter = chapters?.find((c) => c.id === activeId) ?? null;
 
-  return (
-    <div className="app">
-      <Header
-        showBackButton={!!chapters && !loading}
-        onNewVideo={() => {
-          setChapters(null);
-          setActiveId(null);
-          setUserAnswers();
-        }}
-      />
+  // If chapters are loaded, show the app interface
+  if (chapters) {
+    return (
+      <div className="app">
+        <Header
+          showBackButton={!!chapters && !loading}
+          onNewVideo={() => {
+            setChapters(null);
+            setActiveId(null);
+            setUserAnswers({});
+          }}
+          onSubmitAssessment={() => setShowResults(true)}
+        />
 
-      {!chapters && !loading && (
-        <UrlForm onSubmit={handleGenerate} loading={loading} />
-      )}
-
-      {loading && (
-        <div className="loading-container">
-          <div className="loading-spinner" />
-          <div className="loading-steps">
-            <p className={`loading-step ${progress.step === 'fetching_transcript' ? 'active' : 'completed'}`}>
-              Fetching transcript from YouTube… {progress.step === 'fetching_transcript' ? '⏳' : '✓'}
-            </p>
-            <p className={`loading-step ${progress.step === 'splitting_chapters' ? 'active' : (progress.step === 'fetching_transcript' ? '' : 'completed')}`}>
-              Analyzing video chapters… {progress.step === 'splitting_chapters' ? '⏳' : (progress.step === 'fetching_transcript' ? '' : '✓')}
-            </p>
-            <p className={`loading-step ${progress.step === 'generating_exercises' ? 'active' : ''}`}>
-              Generating exercises with AI… {progress.step === 'generating_exercises' ? `(${progress.current} of ${progress.total}) ⏳` : ''}
-            </p>
-            {progress.step === 'generating_exercises' && progress.total > 0 && (
-              <div className="progress-bar-wrapper">
-                <div 
-                  className="progress-bar-fill" 
-                  style={{ width: `${(progress.current / progress.total) * 100}%` }} 
-                />
-              </div>
-            )}
+        {error && !loading && (
+          <div className="error-box" role="alert">
+            ⚠️ {error}
           </div>
-        </div>
-      )}
+        )}
 
-      {error && !loading && (
-        <div className="error-box" role="alert">
-          ⚠️ {error}
-        </div>
-      )}
+        {chapters && !loading && (
+          <div className="chapter-layout">
+            <ChapterSidebar
+              chapters={chapters}
+              activeId={activeId}
+              onSelect={setActiveId}
+              onSubmitAssessment={() => setShowResults(true)}
+              userAnswers={userAnswers}
+            />
+            <ExercisePanel
+              key={activeId}
+              chapter={activeChapter}
+              userAnswers={userAnswers}
+              onMcqSelect={handleMcqSelect}
+              onCodeChange={handleCodeChange}
+              onCodeExecute={handleCodeExecute}
+            />
+          </div>
+        )}
 
-      {chapters && !loading && (
-        <div className="chapter-layout">
-          <ChapterSidebar
-            chapters={chapters}
-            activeId={activeId}
-            onSelect={setActiveId}
-            onSubmitAssessment={() => setShowResults(true)}
-          />
-          <ExercisePanel
-            key={activeId}
-            chapter={activeChapter}
-            userAnswers={userAnswers}
-            onMcqSelect={handleMcqSelect}
-            onCodeChange={handleCodeChange}
-            onCodeExecute={handleCodeExecute}
-          />
-        </div>
-      )}
+        {showResults && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h3 className="modal-title">Assessment Results</h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                Here is your performance breakdown across all chapters:
+              </p>
 
-      {showResults && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3 className="modal-title">Assessment Results</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-              Here is your performance breakdown across all chapters:
-            </p>
-
-            <div className="score-summary">
-              <div className="score-row">
-                <span className="score-label">Multiple Choice Questions</span>
-                <span className="score-value mcq-val">
-                  {scores.mcqCorrect} / {scores.mcqTotal}
-                </span>
+              <div className="score-summary">
+                <div className="score-row">
+                  <span className="score-label">Multiple Choice Questions</span>
+                  <span className="score-value mcq-val">
+                    {scores.mcqCorrect} / {scores.mcqTotal}
+                  </span>
+                </div>
+                <div className="score-row">
+                  <span className="score-label">Coding Exercises</span>
+                  <span className="score-value coding-val">
+                    {scores.codingCorrect} / {scores.codingTotal}
+                  </span>
+                </div>
+                <div className="score-row score-total">
+                  <span className="score-label" style={{ color: '#fff' }}>Total Score</span>
+                  <span className="score-value">
+                    {scores.mcqCorrect + scores.codingCorrect} / {scores.mcqTotal + scores.codingTotal}
+                  </span>
+                </div>
               </div>
-              <div className="score-row">
-                <span className="score-label">Coding Exercises (Direct match check)</span>
-                <span className="score-value coding-val">
-                  {scores.codingCorrect} / {scores.codingTotal}
-                </span>
-              </div>
-              <div className="score-row score-total">
-                <span className="score-label" style={{ color: '#fff' }}>Total Score</span>
-                <span className="score-value">
-                  {scores.mcqCorrect + scores.codingCorrect} / {scores.mcqTotal + scores.codingTotal}
-                </span>
-              </div>
+
+              <button className="btn-close-modal" onClick={() => setShowResults(false)}>
+                Close & Review
+              </button>
             </div>
-
-            <button className="btn-close-modal" onClick={() => setShowResults(false)}>
-              Close & Review
-            </button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+    );
+  }
+
+  // Show landing page
+  return (
+    <div className="app landing-page">
+      <Header />
+      <Hero onSubmit={handleGenerate} loading={loading} error={error} />
+      <Problem />
+      <Features />
+      <HowItWorks />
+      <Demo />
+      <Stats />
+      <FAQ />
+      <Footer />
     </div>
   );
 }
