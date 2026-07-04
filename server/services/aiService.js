@@ -307,7 +307,9 @@ Generate a structured learning curriculum with exactly 4 distinct chapters that 
 For each chapter, provide:
 1. A descriptive title.
 2. A timeRange string representing a logical progression, starting from "0:00 - 5:00" and progressing forward.
-3. An array containing exactly 1 coding exercise of type "multiple_choice" or "coding" (coding exercises must include: question, starterCode, answer, explanation).
+3. An array containing exactly 5 exercises: 3 "multiple_choice" and 2 "coding".
+
+All questions and answers must be grounded in realistic programming concepts related to the video topic.
 
 Format your output as a single JSON object matching this structure:
 {
@@ -317,12 +319,46 @@ Format your output as a single JSON object matching this structure:
       "timeRange": "0:00 - 5:00",
       "exercises": [
         {
+          "id": 1,
+          "type": "multiple_choice",
+          "question": "Question text?",
+          "options": ["Option A", "Option B", "Option C", "Option D"],
+          "answer": "Option A",
+          "explanation": "Explanation of the correct answer."
+        },
+        {
+          "id": 2,
+          "type": "multiple_choice",
+          "question": "Question text?",
+          "options": ["Option A", "Option B", "Option C", "Option D"],
+          "answer": "Option A",
+          "explanation": "Explanation of the correct answer."
+        },
+        {
+          "id": 3,
+          "type": "multiple_choice",
+          "question": "Question text?",
+          "options": ["Option A", "Option B", "Option C", "Option D"],
+          "answer": "Option A",
+          "explanation": "Explanation of the correct answer."
+        },
+        {
+          "id": 4,
           "type": "coding",
-          "title": "Exercise Title",
-          "question": "Exercise instructions and question prompt...",
-          "starterCode": "starter code...",
-          "answer": "correct solution code...",
-          "explanation": "why this is the correct solution..."
+          "language": "javascript",
+          "question": "Write a function that...",
+          "starterCode": "function solution(input) {\\n  // TODO: implement\\n}",
+          "answer": "function solution(input) {\\n  // implementation\\n}",
+          "explanation": "Explanation of the solution."
+        },
+        {
+          "id": 5,
+          "type": "coding",
+          "language": "javascript",
+          "question": "Write a function that...",
+          "starterCode": "function solution(input) {\\n  // TODO: implement\\n}",
+          "answer": "function solution(input) {\\n  // implementation\\n}",
+          "explanation": "Explanation of the solution."
         }
       ]
     }
