@@ -3,7 +3,7 @@
 CodeCast is an AI-powered learning platform that transforms any programming tutorial on YouTube into an interactive learning experience. Instead of passively watching long videos, users can paste a YouTube URL and instantly receive AI-generated multiple-choice questions, coding exercises, and a secure online code editor to test their understanding.
 
 The platform bridges the gap between content consumption and active learning, enabling users to reinforce concepts immediately after watching a tutorial.
-
+![Architecture Diagram](codecast_architecture_corrected.png)
 
 ## Silo 1 - parsing the transciption to JSON
 lets get the basic youtube url to transcript working
